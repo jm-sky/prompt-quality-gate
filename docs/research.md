@@ -6,9 +6,11 @@
 
 ## 1. Executive summary
 
-**Wniosek: brak zweryfikowanego gotowca pokrywającego całe MVP.** Jest jednak bardzo bliski technicznie [prompt-bouncer](https://github.com/ray-amjad/claude-code-mods/tree/main/plugins/prompt-bouncer): działający **Mod** z `prompt.submit`, `$.model.complete({ model: 'haiku' })`, kontekstem projektu i obsługą błędów typu fail-open. Sprawdza jednak **każdy** prompt, odrzuca niejasne polecenia zamiast zadawać do trzech pytań i nie ma wymaganego przepływu akceptacji zamiennika.
+**Wniosek po uzupełnieniu o inspirację z filmu: brak zweryfikowanego gotowca pokrywającego całe MVP, ale istnieje bliski funkcjonalnie [afterever / prompt-upgrade](https://github.com/afterever/claude-mods/tree/a427b0225e091eb8c85c373d70e5de43043b3b3a/prompt-upgrade).** Oferuje do trzech pytań, podgląd oryginału i propozycji, edycję, kopiowanie, Run i Cancel. README przypisuje pomysł i specyfikację stronie Tristena O’Briena. To społecznościowa implementacja inspiracji, nie potwierdzony kod z filmu.
 
-**Rekomendacja: BUILD (mały własny Mod), REUSE wzorców z prompt-bouncer; nie fork całego repozytorium.** Oficjalne Mods pozwalają rzeczywiście podmienić tekst promptu, wyświetlić UI i użyć Haiku na poświadczeniach aktualnej sesji. Klasyczny hook `UserPromptSubmit` nie zastąpi Modu w pełnym UX. Złożoność MVP: **średnia**, z dwoma elementami do praktycznej walidacji: **wyłącznie pierwszy prompt mimo `/clear`/`/resume`** oraz **interaktywne pytania + świadome potwierdzenie w `prompt.submit`**.
+**Rekomendacja: najpierw ocenić ADAPT/FORK wydzielonego `prompt-upgrade` kontra BUILD małego Modu; nie przesądzać budowy od zera.** `prompt-upgrade` jest bliższy docelowemu UX, natomiast [prompt-bouncer](https://github.com/ray-amjad/claude-code-mods/tree/main/plugins/prompt-bouncer) pozostaje wzorcem oceny i fail-open. Adaptacja wymaga first-only, Haiku także do rewrite, ścieżki pass bez rewrite, wyłączenia historii i poprawy obsługi błędów. Obie drogi mają jakościowo **średnią** złożoność; wybór po małym PoC i porównaniu zakresu zmian, bez implementowania go w tym researchu.
+
+Oficjalne Mods pozwalają podmienić tekst, wyświetlić UI i użyć modelu na poświadczeniach sesji. Należy odróżnić podmianę w tym samym zdarzeniu od zatrzymania promptu i wysłania zatwierdzonego tekstu nowym submit. Szczegóły nowego kandydata i ograniczenia dowodów: [sekcja 9](#9-uzupełnienie-prompt-upgrade-i-inspiracja-z-filmu).
 
 Zakładana platforma: **interaktywny terminal Claude Code >= 2.1.287**. VS Code/desktop tylko po osobnej weryfikacji. Nieinteraktywny `claude -p`/SDK: domyślnie przepuszczać oryginał (brak UI).
 
@@ -22,14 +24,14 @@ Daty poniżej to **ostatnie zweryfikowane commity repozytorium**, nie gwarancja 
 | [harshivpgajjar / fixmyprompt](https://github.com/harshivpgajjar/fixmyprompt) | [2026-07-08](https://github.com/harshivpgajjar/fixmyprompt/commit/e16e734d95789fafd91727c13820d117b901b83c); 39 commitów; **MIT** | Marketplace plugin / `python3 install.py` (osobne instalowanie CLI) | Coach, opt-in, scoring lokalny, wskazówki, personalizacja i testy | Klasyczne hooki; generalnie wiele wiadomości, nie tylko pierwsza; brak gwarantowanej natywnej podmiany z akceptacją; dodatkowe komponenty/artefakty i opcjonalny model zewnętrznym procesem — zbędne dla MVP |
 | [0-to-1-Labs / claude-code-prompt-optimizer](https://github.com/0-to-1-Labs/claude-code-prompt-optimizer) | [2026-09-30](https://github.com/0-to-1-Labs/claude-code-prompt-optimizer/commit/7675de712084cd6e6a6a658c12b3291a5722655b); 27 commitów; **MIT** | Marketplace: `0-to-1-Labs/claude-marketplace`; plugin `claude-code-prompt-optimizer` | Opt-in, model do rozwijania promptu, integracja z hooks | Klasyczny `UserPromptSubmit` i dodatkowy kontekst, a nie zastąpienie oryginału; bazowo silniejszy model / Agent SDK; bez first-only, 3 pytań i natywnego potwierdzenia |
 | [Hocine-Bourouih / claude-prompt-optimizer](https://github.com/Hocine-Bourouih/claude-prompt-optimizer) | [2026-03-31](https://github.com/Hocine-Bourouih/claude-prompt-optimizer/commit/08b557a28c4f13ff5eabd8387de8d08e97dcf853); 5 commitów; **MIT** | Instalator z repo / plugin Claude Code | Automatyczne propozycje, kontekst projektu, elementy zatwierdzania | Klasyczne skrypty/hooki, szersza funkcjonalność pamięci sesji; brak dowodu na bezpośrednią, bezstratną podmianę tekstu w tym samym `prompt.submit`; słabszy sygnał utrzymania |
-| [neelshah4 / claude-prompt-optimizer](https://github.com/neelshah4/claude-prompt-optimizer) | [2026-10-17](https://github.com/neelshah4/claude-prompt-optimizer/commit/25a6b8210f55309dffb170bf5ca6933c40d7112a); świeża aktywność; **MIT** | Skill/plugin wg README projektu | Strukturyzacja promptów, kontrole poprawności i doprecyzowanie zadania | Działa przy kolejnych istotnych zadaniach, optymalizuje zachowanie odpowiedzi Claude, nie jest natywną bramką pierwszego promptu z UI i atomową zamianą |
+| [afterever / prompt-upgrade](https://github.com/afterever/claude-mods/tree/a427b0225e091eb8c85c373d70e5de43043b3b3a/prompt-upgrade) | [2026-10-13, ostatni commit dotyczący modułu](https://github.com/afterever/claude-mods/commit/6fb17edcb4d3bcd0f9df2f53ae9c5546b623fe68); v0.1.0; **MIT**; brak dowodu długoterminowego utrzymania | Marketplace `afterever/claude-mods`; `prompt-upgrade@afterever-mods` | Do 3 pytań, własne odpowiedzi/Skip, podgląd, Edit/Copy/Run/Cancel; testy w repo; jawne przypisanie inspiracji autorowi filmu | Nie first-only; Haiku + Sonnet; także dobry prompt trafia do rewrite; trwała historia do 20 wpisów; brak kontekstu repo w zapytaniach modelu; drop + nowy submit; błędy modelu wymagają decyzji użytkownika |
 
 **Ocena reuse/fork/build:**
 - **Reuse instalowanego gotowca — niska złożoność, ale niedostateczna zgodność**: `prompt-bouncer` może działać jako osobny eksperyment, lecz nie spełni kryteriów akceptacji.
 - **Fork `prompt-bouncer` — średnia złożoność**: techniczne API jest bliskie, ale trzeba wymienić istotę klasyfikacji, logikę sesji i UI; fork całego wielomodułowego katalogu zwiększy koszt aktualizacji.
-- **Build małego Modu — średnia złożoność (zalecane)**: kilka plików pluginu, bez zewnętrznej infrastruktury i bez Node/bundlera; projektować na podstawie oficjalnych typów oraz zweryfikowanych fragmentów `prompt-bouncer` (licencja MIT z zachowaniem notice przy kopiowaniu).
+- **Build małego Modu — średnia złożoność (alternatywa do adaptacji `prompt-upgrade`)**: kilka plików pluginu, bez zewnętrznej infrastruktury i bez Node/bundlera; projektować na podstawie oficjalnych typów oraz zweryfikowanych fragmentów `prompt-bouncer` (licencja MIT z zachowaniem notice przy kopiowaniu).
 
-Nie znaleziono wiarygodnego, utrzymywanego `prompt-coach` / enhancera spełniającego **łącznie**: first-only + `/clear`/`/resume` + max 3 pytania + wybór nowy/oryginalny/anuluj + podmiana w tej samej turze + Haiku przez sesję.
+Nie potwierdzono w pełni zgodnego, utrzymywanego `prompt-coach` / enhancera spełniającego **łącznie**: first-only + `/clear`/`/resume` + max 3 pytania + wybór nowy/oryginalny/anuluj + podmiana w tej samej turze + Haiku przez sesję.
 
 ## 3. Weryfikacja oficjalnego API Claude Code
 
@@ -87,7 +89,7 @@ Nie znaleziono wiarygodnego, utrzymywanego `prompt-coach` / enhancera spełniaj�
 
 **Dystrybucja:** na start katalog pluginu + `--plugin-dir`; po testach własne repo/marketplace plugin, instalacja globalna per użytkownik i możliwość wyłączenia w projekcie. Włączenie tylko dla obsługiwanych interaktywnych klientów.
 
-**Wariant B: gdy Mods/API interakcji nie działa — złożoność niska, ale zredukowany UX.** Pozostać przy klasycznym `UserPromptSubmit`/`SessionStart`: wykryć pierwszy prompt, ewentualnie wyświetlić komunikat lub *zablokować i oddać tekst do ponownego wprowadzenia*, alternatywnie udostępnić jawną komendę/skill `/refine`. **Nie udawać**, że `additionalContext` zamienia wiadomość użytkownika. Wymóg *zaakceptuj ulepszony / wyślij oryginalny w tej samej turze* pozostaje **niespełniony**. Jeśli ten UX jest obowiązkowy, wymaga działających Mods lub aktualizacji klienta.
+**Wariant B: gdy Mods/API interakcji nie działa — złożoność niska, ale zredukowany UX.** Pozostać przy klasycznym `UserPromptSubmit`/`SessionStart`: wykryć pierwszy prompt, ewentualnie wyświetlić komunikat lub *zablokować i oddać tekst do ponownego wprowadzenia*, alternatywnie udostępnić jawną komendę/skill `/refine`. **Nie udawać**, że `additionalContext` zamienia wiadomość użytkownika. Wymóg *zaakceptuj ulepszony / wyślij oryginalny w tej samej turze* pozostaje **niespełniony**. Jeśli wymagany jest natywny interaktywny UX, wymaga działających Mods lub aktualizacji klienta. Podmiana w tym samym zdarzeniu jest wariantem technicznym, a nie osobnym kryterium akceptacji SPEC (patrz sekcja 9).
 
 ## 7. Otwarte ryzyka / warunki decyzji
 
@@ -120,3 +122,49 @@ Nie znaleziono wiarygodnego, utrzymywanego `prompt-coach` / enhancera spełniaj�
 - [neelshah4/claude-prompt-optimizer](https://github.com/neelshah4/claude-prompt-optimizer), [commit 2026-10-17](https://github.com/neelshah4/claude-prompt-optimizer/commit/25a6b8210f55309dffb170bf5ca6933c40d7112a)
 
 **Zastrzeżenie:** analiza dokumentacji i kodu repozytoriów, bez instalowania obcego kodu, bez wykonania Claude Code i bez benchmarków; punkty wymagające sprawdzenia operacyjnego są jawnie oznaczone.
+
+
+## 9. Uzupełnienie: prompt-upgrade i inspiracja z filmu
+
+**Sprawdzono 2026-10-21.** Ta sekcja uzupełnia wcześniejszy research, który pominął bliskiego kandydata. Wnioski z sekcji 1 i tabela zostały odpowiednio skorygowane; opis API i plan własnego Modu pozostają przydatne jako wariant BUILD.
+
+### Film a wymagania projektu
+
+[Film użytkownika](https://www.youtube.com/watch?v=aD-h7Bcn5OY) jest dostępny w postaci [transkrypcji pośredniej](https://moderncreator.app/2026-10-12-tristen-o-brien-5-more-claude-code-mods-you-need). Bezpośredni odczyt YouTube nie powiódł się. Segment ok. 03:01–04:09 pokazuje pytania o cel, rodzaj biznesu i budżet, następnie porównanie promptów oraz edycję, kopiowanie i Run. Nie dowodzi użycia Haiku, first-only ani sposobu implementacji. First-only, smart pass i brak historii są świadomymi wymaganiami naszego projektu. Edycję i kopiowanie można rozważyć osobno; nie dodajemy ich automatycznie do MVP.
+
+### Kandydat sprawdzony w źródłach
+
+Sprawdzono README, manifest, `hooks/logic.ts`, `hooks/register.tsx`, licencję i obecność plików testowych na rewizji **a427b0225e091eb8c85c373d70e5de43043b3b3a**. Ostatni commit dotyczący ścieżki modułu: **2026-10-13**, `6fb17edcb4d3bcd0f9df2f53ae9c5546b623fe68`. To przegląd statyczny, bez uruchamiania Claude Code i testów autora.
+
+| Obszar | Ustalenie z kodu | Konsekwencja dla adaptacji |
+|---|---|---|
+| Związek z filmem | README przypisuje pomysł i specyfikację stronie tristenobrien.ai | Mocny związek ideowy; brak dowodu tożsamości z demonstracją |
+| Uruchamianie | `/better` ręcznie; auto domyślnie off, ustawienie pamiętane | Auto nie ogranicza się do pierwszego promptu |
+| Modele | `QUESTION_MODEL='haiku'`, `REWRITE_MODEL='sonnet'` | Zmienić rewrite na Haiku i zweryfikować jakość |
+| Dobry prompt | Zero pytań uruchamia rewrite; błędny format pytań też może dać pustą listę | Potrzebny jawny pass i odrębna obsługa błędów parsowania |
+| Interakcja | Do 3 pytań, 2–4 opcje, własny tekst, Skip; review Edit/Copy/Run/Cancel | Przydatny wzorzec UX; zwykłe review nie ma pełnego zestawu trzech akcji z naszego SPEC |
+| Wysłanie | Auto zwraca `{drop}`; przy Run następuje `$.prompt.submit({text, asUser:true})` | To ponowne wysłanie, nie `next({...e,text})`; trzeba ocenić first-only i interakcje z innymi Mods |
+| Oryginał i awarie | Send my original na ekranie błędu; błędy modelu pokazują Retry/Original/Cancel; catch handlera auto przepuszcza | Brak pełnego fail-open dla awarii modelu po przechwyceniu; nie wolno deklarować zgodności |
+| Historia | Zapis oryginału i propozycji do `$.store`, do 20 wpisów; także fallback odzyskiwania | Usunąć/wyłączyć trwałe przechowywanie treści zgodnie z zakresem MVP |
+| Kontekst i pliki | Model dostaje prompt i odpowiedzi, bez odczytu repo; auto omija attachments i `@file` | Uzupełnić zasady kontekstu; bezpieczną politykę dla plików opisać przed wdrożeniem |
+| Bypass | `continue` pomija heurystyka angielskich krótkich odpowiedzi; brak jawnego `kontynuuj` | Zastąpić projektową listą exact skip; nie kopiować heurystyki jako oceny jakości |
+| Licencja/testy | Manifest i LICENSE: MIT; obecne testy flow, logic, layout, svg | Zachować notice przy reuse; obecność testów nie oznacza ich wykonania ani zgodności z naszym MVP |
+
+### Korekta decyzji reuse/fork/build
+
+- **REUSE bez zmian:** nie spełnia SPEC.
+- **ADAPT/FORK wydzielonego modułu:** średnia złożoność; reuse pytań, review i ochrony przed spóźnionymi odpowiedziami. Koszt obejmuje usunięcie historii i rozbudowanego UI oraz zmianę przepływu, modeli i reguł sesji.
+- **BUILD małego Modu:** nadal rozsądna alternatywa o średniej złożoności, jeśli redukcja gotowca jest większa niż napisanie minimalnego dialogu. Wzorce: `prompt-upgrade` dla UX, `prompt-bouncer` dla klasyfikacji.
+
+Najpierw porównać oba warianty w PoC: faktyczny pass bez rewrite, first-only po bypass/Cancel/Run, clear/resume, błąd modelu oraz zachowanie załączników. Nie wymagać „tej samej tury” jako osobnego kryterium biznesowego bez uzasadnienia; SPEC wymaga zatwierdzonej treści i braku utraty wiadomości. Przy drop + submit koniecznie zapewnić brak podwójnego gate i brak podwójnego wysłania.
+
+**Źródła pierwotne:**
+
+- [README i deklaracja inspiracji](https://github.com/afterever/claude-mods/blob/a427b0225e091eb8c85c373d70e5de43043b3b3a/prompt-upgrade/README.md)
+- [Modele, parsery, reguły bypass i instrukcje rewrite](https://github.com/afterever/claude-mods/blob/a427b0225e091eb8c85c373d70e5de43043b3b3a/prompt-upgrade/hooks/logic.ts)
+- [Przechwycenie, UI, zapis historii, błędy i ponowne wysłanie](https://github.com/afterever/claude-mods/blob/a427b0225e091eb8c85c373d70e5de43043b3b3a/prompt-upgrade/hooks/register.tsx)
+- [Manifest](https://github.com/afterever/claude-mods/blob/a427b0225e091eb8c85c373d70e5de43043b3b3a/prompt-upgrade/.claude-plugin/plugin.json), [MIT LICENSE](https://github.com/afterever/claude-mods/blob/a427b0225e091eb8c85c373d70e5de43043b3b3a/LICENSE)
+- [Commit modułu z 2026-10-13](https://github.com/afterever/claude-mods/commit/6fb17edcb4d3bcd0f9df2f53ae9c5546b623fe68)
+- [Oficjalne zdarzenia i podmiana promptu](https://code.claude.com/docs/en/plugins/mods/events), [API modeli i submit](https://code.claude.com/docs/en/plugins/mods/api)
+
+Katalogi Mods pomogły znaleźć kandydata, lecz nie stanowią dowodu działania. Inne wpisy o nazwie `prompt-upgrade` nie zostały uznane za ten sam kod ani implementację autora filmu.
