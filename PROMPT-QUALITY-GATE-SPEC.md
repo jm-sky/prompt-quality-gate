@@ -3,6 +3,14 @@
 **Status:** założenia MVP do weryfikacji technicznej i implementacji  
 **Cel:** pomóc doprecyzować wyłącznie pierwszy prompt nowej sesji Claude Code, bez ingerowania w dalszą rozmowę.
 
+## Inspiracja i świadome różnice
+
+Inspiracja: Tristen O’Brien, [5 More Claude Code Mods You Need](https://www.youtube.com/watch?v=aD-h7Bcn5OY), segment **Prompt Upgrade, ok. 03:01–04:09**. Według dostępnej [transkrypcji filmu](https://moderncreator.app/2026-10-12-tristen-o-brien-5-more-claude-code-mods-you-need) przepływ obejmuje pytania, podgląd oryginału i propozycji oraz edycję, kopiowanie lub uruchomienie propozycji. Bezpośredni odczyt YouTube był niedostępny podczas weryfikacji 2026-10-21; nie jest to audyt kodu autora.
+
+Ten projekt świadomie zawęża ideę: **tylko pierwszy prompt, ocena adekwatności zamiast obowiązkowego przepisywania, Haiku, brak trwałej historii treści**. Ograniczenia first-only i Haiku są wymaganiami tego projektu, nie ustaleniami wynikającymi z demonstracji. Dłuższy prompt sam w sobie nie jest kryterium jakości.
+
+Istnieje społecznościowa implementacja [afterever / prompt-upgrade](https://github.com/afterever/claude-mods/tree/a427b0225e091eb8c85c373d70e5de43043b3b3a/prompt-upgrade), której README przypisuje pomysł i specyfikację stronie autora filmu. Nie potwierdzono, że to kod użyty w filmie. Przed implementacją porównać adaptację tego modułu z małym własnym Modem; szczegóły i rozbieżności w [researchu](docs/research.md#9-uzupełnienie-prompt-upgrade-i-inspiracja-z-filmu).
+
 ## 1. Problem
 
 Pierwszy prompt nowej sesji bywa zbyt ogólny, np. „napraw logowanie”. Zamiast od razu uruchamiać pracę nad niejasnym zadaniem, chcemy opcjonalnie doprecyzować oczekiwany efekt i ograniczenia. Krótkie prompty mogą jednak być w pełni poprawne, jeśli ich znaczenie wynika z kontekstu projektu, np. `continue`, gdy repozytorium zawiera instrukcje dalszej pracy.
