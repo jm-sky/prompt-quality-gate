@@ -1,0 +1,5 @@
+{
+  "name": "prompt-quality-gate",
+  "owner": { "name": "Jan Madeyski" },
+  "plugins": [{ "name": "prompt-quality-gate", "source": "./prompt-quality-gate" }]
+}

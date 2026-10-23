@@ -1,0 +1,51 @@
+{
+  "name": "prompt-quality-gate",
+  "version": "0.1.0",
+  "description": "Checks only the first prompt of a new Claude Code session with Haiku and, when it is unclear, asks up to 3 questions and offers an improved prompt for approval.",
+  "author": { "name": "Jan Madeyski" },
+  "license": "MIT",
+  "userConfig": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Turn the first-prompt gate on or off",
+      "default": true
+    },
+    "model": {
+      "type": "string",
+      "title": "Model",
+      "description": "Model alias used for assessment and rewrite",
+      "default": "haiku"
+    },
+    "maxQuestions": {
+      "type": "number",
+      "title": "Max questions",
+      "description": "Maximum clarifying questions (1-3)",
+      "default": 3
+    },
+    "timeoutMs": {
+      "type": "number",
+      "title": "Model timeout (ms)",
+      "description": "Per model call; on timeout the original prompt is sent",
+      "default": 20000
+    },
+    "skipExact": {
+      "type": "string",
+      "title": "Skip prompts",
+      "description": "Comma-separated prompts passed through without any check (trimmed, case-insensitive)",
+      "default": "continue,kontynuuj"
+    },
+    "contextFiles": {
+      "type": "string",
+      "title": "Context files",
+      "description": "Comma-separated project files whose beginning is shown to the model",
+      "default": "AGENTS.md,CLAUDE.md,NEXT-SESSION-KICK-OFF-PROMPT.md"
+    },
+    "contextMaxChars": {
+      "type": "number",
+      "title": "Context chars per file",
+      "description": "How many leading characters of each context file are sent (0 = none)",
+      "default": 1500
+    }
+  }
+}
