@@ -33,7 +33,7 @@ Pierwszeństwo: **projekt > użytkownik > domyślne**.
 | Klucz | Domyślnie | Znaczenie |
 |-------|-----------|-----------|
 | `enabled` | `true` | włącza/wyłącza bramkę |
-| `model` | `haiku` | alias modelu do oceny i rewrite |
+| `model` | `haiku` | alias (`haiku`, `sonnet`, `opus`) albo pełne ID modelu, używane do oceny i rewrite |
 | `maxQuestions` | `3` | pytań 1–3 |
 | `timeoutMs` | `20000` | limit na jedno wywołanie modelu |
 | `skipExact` | `continue,kontynuuj` | prompty przepuszczane bez sprawdzania (po trim, bez rozróżniania wielkości liter) |
@@ -42,6 +42,15 @@ Pierwszeństwo: **projekt > użytkownik > domyślne**.
 
 - **Użytkownik:** wiersze `userConfig` wtyczki w `/config` albo `pluginConfigs` w ustawieniach.
 - **Projekt:** plik `.claude/prompt-quality-gate.json`, np. `{ "enabled": false }`.
+
+### Zmiana modelu (np. na Sonnet)
+
+Haiku jest tani i szybki, ale słabiej wyłapuje niejasne prompty i pisze gorszy rewrite. Sonnet jest dokładniejszy, za to wolniejszy i droższy w zużyciu planu.
+
+- Dla jednego projektu: `.claude/prompt-quality-gate.json` → `{ "model": "sonnet" }`.
+- Dla wszystkich projektów: opcja `model` wtyczki w `/config` albo `pluginConfigs` w ustawieniach.
+
+Projektowy `sonnet` sprawdzony w prawdziwym Claude Code (log: `claude-sonnet-5-5`). Przy dłuższych modelach rozważ większy `timeoutMs`.
 
 ## Wyłączenie
 
@@ -57,7 +66,7 @@ Pierwszeństwo: **projekt > użytkownik > domyślne**.
 
 ## Koszty
 
-Zużycie Haiku liczy się do planu subskrypcji albo rachunku API. Pierwszy prompt to jedno wywołanie (ocena); jeśli odpowiesz na pytania, dochodzi drugie (rewrite). Kolejne prompty nie wywołują modelu.
+Zużycie wybranego modelu (domyślnie Haiku) liczy się do planu subskrypcji albo rachunku API. Pierwszy prompt to jedno wywołanie (ocena); jeśli odpowiesz na pytania, dochodzi drugie (rewrite). Kolejne prompty nie wywołują modelu.
 
 ## Ograniczenia
 
@@ -65,7 +74,7 @@ Zużycie Haiku liczy się do planu subskrypcji albo rachunku API. Pierwszy promp
 - Pomijane są: komendy slash, prompty z załącznikami, prompty z `@plik`, wiadomości nie z pola edycji.
 - Własny tekst („Type something.”) w ostatnim wyborze oznacza anulowanie.
 - Przeładowanie wtyczki zeruje pamięć o sesjach już ocenionych, więc po reloadzie pierwszy prompt może zostać oceniony ponownie.
-- Jakość pytań i rewrite zależy od Haiku. Krótki, ale konkretny prompt może zostać uznany za wystarczający.
+- Jakość pytań i rewrite zależy od wybranego modelu; Haiku bywa zbyt pobłażliwy, wtedy ustaw `model` na `sonnet`. Krótki, ale konkretny prompt może zostać uznany za wystarczający.
 - Reguły `REQUIRE_APPROVAL`, `ON_ERROR`, `FIRST_PROMPT_ONLY` z SPEC są stałym zachowaniem, nie opcjami.
 
 ## Testy
